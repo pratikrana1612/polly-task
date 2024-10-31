@@ -35,7 +35,7 @@ defmodule PollyWeb.PollLive.Show do
 
       socket
       |> assign(:page_title, page_title(socket.assigns.live_action))
-      |> assign(:poll, Polls.get_poll(id))
+      |> assign(:poll, poll)
       |> assign(:form, form)
       |> assign(:already_voted, already_voted?)
       |> assign(:selected_option_id, selected_option_id)
@@ -70,13 +70,31 @@ defmodule PollyWeb.PollLive.Show do
   end
 
   @impl true
-  def handle_event("save", params, socket) do
-    # TODO: implement this function
+  def handle_event("save", %{"option" => option_id} = params, socket) do
+    # Check if the user is signed in
+    if is_nil(socket.assigns.current_user) do
+      socket
+      |> put_flash(:error, "You need to sign in to vote")
+    else
+      # Check if the user has already voted
+      if socket.assigns.already_voted do
+        socket
+        |> put_flash(:error, "You have already voted in this poll")
+      else
+        # Perform the vote
+        increment_vote(socket, params)
+        PollyWeb.Endpoint.broadcast_from(self(), @polls_topic, @poll_vote_event, %{})
+
+        socket
+        |> assign(:already_voted, true)
+        |> assign(:selected_option_id, option_id)
+        |> put_flash(:info, "Thank you for voting!")
+      end
+    end
   end
 
   @impl true
   def handle_info(%{topic: @polls_topic, event: @poll_vote_event, payload: _state}, socket) do
-    # we basically update the whole list of polls
     if socket.assigns.live_action == :show_result do
       {:noreply, update(socket, :poll, fn poll -> Polls.get_poll(poll.id, true) end)}
     else

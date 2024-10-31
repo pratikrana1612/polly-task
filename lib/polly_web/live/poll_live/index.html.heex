@@ -18,12 +18,14 @@
 </.table>
 
 <.modal :if={@live_action in [:new]} id="poll-modal" show on_cancel={JS.patch(~p"/")}>
+
   <.live_component
     module={PollyWeb.PollLive.FormComponent}
     id={@poll.id || :new}
     title={@page_title}
     action={@live_action}
     poll={@poll}
+    current_user: @current_user
     patch={~p"/"}
   />
 </.modal>

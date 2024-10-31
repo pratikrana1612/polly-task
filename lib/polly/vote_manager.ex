@@ -2,10 +2,10 @@ defmodule Polly.VoteManager do
   @moduledoc """
   VoteManager is a gen-server responsible for holding and managing votes for a user.
   A VoteManager process holds votes casted by a single user. Each instance is registered
-  to the VoteRegistry for fast and convinient discovery and is created under a DynamicSupervisor.
+  to the VoteRegistry for fast and convenient discovery and is created under a DynamicSupervisor.
 
   This process design works well here because the act of "storing a vote" and checking if a user
-  has "already cast a vote" are independent operation on a user level.
+  has "already cast a vote" are independent operations on a user level.
 
   The state of the gen server is of the format map(poll_id => %Vote{}). This has been done to provide
   O(1) lookups.
@@ -29,8 +29,8 @@ defmodule Polly.VoteManager do
   end
 
   @doc """
-  adds a vote for the user with username for a poll identified by a poll id. The
-  option which the vote if for is identified by option_id.
+  Adds a vote for the user with username for a poll identified by a poll id. The
+  option which the vote is for is identified by option_id.
   This operation is idempotent in nature and hence running it multiple times would
   yield the same outcome as running it once.
   """
@@ -45,10 +45,10 @@ defmodule Polly.VoteManager do
   end
 
   @doc """
-  Fetches the option id for the user if they have casted a vote for a poll.
+  Fetches the option id for the user if they have cast a vote for a poll.
   The poll is identified using the poll id.
-  A tuple is returned with first value as true or false based on if the user
-  has voted in the poll and second value is the option id which will be nil
+  A tuple is returned with the first value as true or false based on if the user
+  has voted in the poll, and the second value is the option id, which will be nil
   if the user hasn't voted.
   """
   @spec fetch_vote(binary(), binary()) :: {boolean(), binary() | nil}
@@ -71,15 +71,19 @@ defmodule Polly.VoteManager do
   end
 
   @doc """
-  Adds the vote to the state of the gen server. The poll is stored in the state
+  Adds the vote to the state of the GenServer. The poll is stored in the state
   in the form of map(poll_id => %Vote{}). This is done to provide O(1) lookup.
   """
   @impl true
-  def handle_call({:add_vote, username, poll_id, option_id}, _from, state) do
-    # TODO: implement this function
+  def handle_call({:add_vote, _username, poll_id, option_id}, _from, state) do
+    new_state =
+      Map.put(state, poll_id, %Vote{poll_id: poll_id, option_id: option_id})
+
+    {:reply, :ok, new_state}
   end
 
+  # Registers the GenServer process for a given username in the registry
   defp via(username) do
-    # TODO: implement this function
+    {:via, Registry, {@registry, username}}
   end
 end
